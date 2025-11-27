@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impact Chat Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+    .line-clamp-1 {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen w-full bg-white text-gray-900 font-sans overflow-hidden">
+    
+    <!-- 1️⃣ 왼쪽 사이드바: 채팅방 목록 -->
+    <div id="left-sidebar" class="w-[280px] bg-[#F7F7F8] border-r border-[#E5E5E5] flex flex-col flex-shrink-0">
+      <!-- 동적으로 렌더링됨 -->
+    </div>
+
+    <!-- 2️⃣ 중앙: 채팅 메시지 영역 -->
+    <div class="flex-1 flex flex-col h-full relative min-w-0">
+      <!-- 헤더 -->
+      <header id="main-header" class="h-14 border-b border-[#E5E5E5] flex items-center justify-between px-6 bg-white z-10">
+        <!-- 동적으로 렌더링됨 -->
+      </header>
+
+      <!-- 메시지 리스트 -->
+      <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+        <!-- 동적으로 렌더링됨 -->
+      </div>
+
+      <!-- 입력창 -->
+      <div id="input-container" class="p-4 bg-white">
+        <!-- 동적으로 렌더링됨 -->
+      </div>
+    </div>
+
+    <!-- 3️⃣ 우측 사이드바: 분기 목록 -->
+    <div id="right-sidebar" class="border-l border-[#E5E5E5] bg-[#F9FAFB] flex flex-col transition-all duration-300 ease-in-out w-0 translate-x-full border-none">
+      <!-- 동적으로 렌더링됨 -->
+    </div>
+
+    <!-- 분기 생성 모달 -->
+    <div id="modal-container">
+      <!-- 동적으로 렌더링됨 -->
+    </div>
+
+  </div>
+
+  <script type="module" src="srcs/app.js"></script>
+</body>
+</html>
+
