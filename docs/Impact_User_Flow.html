@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impact User Flow (Final Consolidated)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: { htmlLabels: true, curve: 'basis' }
+        });
+    </script>
+    <style>
+        body { font-family: sans-serif; padding: 40px; background: #f4f4f5; display: flex; flex-direction: column; align-items: center; gap: 40px; }
+        .section { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 1000px; }
+        h3 { margin: 0 0 20px 0; padding-bottom: 10px; border-bottom: 2px solid #eee; color: #333; font-weight: 700; font-size: 1.2em; }
+        .mermaid { display: flex; justify-content: center; }
+        .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-right: 8px; }
+        .total { background: #e0e7ff; color: #3730a3; }
+        .sub { background: #f3f4f6; color: #1f2937; }
+    </style>
+</head>
+<body>
+
+    <!-- 0. 전체 통합 플로우 (Total Flow) -->
+    <div class="section">
+        <h3><span class="badge total">Total</span>0. 전체 서비스 흐름도 (Consolidated Flow)</h3>
+        <div class="mermaid">
+        flowchart TD
+            %% 스타일 정의
+            classDef startNode fill:#22c55e,stroke:#16a34a,color:#fff,rx:5,ry:5
+            classDef processNode fill:#fff,stroke:#333,stroke-width:1px
+            classDef decisionNode fill:#f0f9ff,stroke:#0ea5e9,stroke-width:1px,stroke-dasharray: 5 5
+            classDef endNode fill:#333,stroke:#333,color:#fff,rx:5,ry:5
+
+            Start("App 접속"):::startNode --> LoginCheck{"로그인/기록 확인"}:::decisionNode
+            
+            LoginCheck -->|기존 대화| Continue["대화 이어하기"]:::processNode
+            LoginCheck -->|신규| New["새 대화 시작 (+ 버튼)"]:::processNode
+            
+            New --> PromptInput["첫 프롬프트 입력"]:::processNode
+            PromptInput --> ChatUI["채팅방 생성 (Root)"]:::processNode
+            Continue --> ChatUI
+
+            ChatUI --> Interaction{"메시지 상호작용"}:::decisionNode
+            
+            Interaction -->|일반 대화| MsgFlow["메시지 전송 & AI 응답"]:::processNode
+            Interaction -->|분기/재생성| BranchFlow["메시지 호버 & 액션"]:::processNode
+            Interaction -->|탐색/관리| ManageFlow["사이드바 탐색 & 관리"]:::processNode
+
+            MsgFlow --> ChatUI
+            BranchFlow --> ChatUI
+            ManageFlow --> ChatUI
+        </div>
+    </div>
+
+    <!-- 1. 진입 및 대화 시작 -->
+    <div class="section">
+        <h3><span class="badge sub">Step 1</span>1. 서비스 진입 & 대화 시작</h3>
+        <div class="mermaid">
+        flowchart TD
+            Start("App 접속") --> Action{"대화 기록 확인"}
+            
+            Action -- "기존 대화 있음" --> ListClick["좌측 목록에서 대화 클릭"]
+            Action -- "대화 없음 / 신규" --> BtnClick["좌측 사이드바 (+) 새 대화 버튼 클릭"]
+            
+            BtnClick --> InputUI["중앙 입력창 활성화"]
+            ListClick --> ChatUI["대화 이어하기 (내역 표시)"]
+            
+            InputUI --> Type["첫 프롬프트 입력 및 Enter"]
+            Type --> AutoSys["시스템: 제목 자동 생성 및 Root(뿌리) ID 부여"]
+            AutoSys --> ChatUI
+        </div>
+    </div>
+
+    <!-- 2. 메시지 상호작용 (분기 vs 누적) -->
+    <div class="section">
+        <h3><span class="badge sub">Step 2</span>2. 메시지 상호작용: 분기 및 답변 누적</h3>
+        <div class="mermaid">
+        flowchart TD
+            InChat("채팅 중") --> Hover["메시지 버블에 마우스 호버"]
+            Hover --> CheckType{"메시지 유형 확인"}
+            
+            %% Case A: AI 답변 (누적 생성)
+            CheckType -- "AI 답변 (Response)" --> ShowRegen["'답변 추가/재생성' 버튼 노출"]
+            ShowRegen --> ClickRegen["버튼 클릭"]
+            ClickRegen --> Accumulate["시스템: 같은 질문에 대한 새로운 답변 생성 (누적)"]
+            Accumulate --> ViewVersion["UI: < 1 / 2 > 버전 선택 UI 표시"]
+
+            %% Case B: 사용자 질문 (분기 생성)
+            CheckType -- "사용자 질문 (Prompt)" --> CheckRoot{"첫 번째 질문인가? (Root)"}
+            
+            CheckRoot -- "Yes (Root)" --> NoBtn["분기 버튼 미표시 (불가)"]
+            CheckRoot -- "No (Index 1 이상)" --> ShowBranch["'분기하기' 버튼 노출"]
+            
+            ShowBranch --> ClickBranch["버튼 클릭"]
+            ClickBranch --> Modal["새 분기 만들기 모달 팝업"]
+            
+            Modal --> NewInput["새로운 질문(프롬프트) 입력"]
+            NewInput --> Confirm["생성하기 클릭"]
+            
+            Confirm --> SystemJob["시스템: 이전 맥락 복사 및 형제 노드 생성"]
+            SystemJob --> ViewChange["새로운 분기(Branch) 화면으로 전환"]
+        </div>
+    </div>
+
+    <!-- 3. 탐색 및 관리 -->
+    <div class="section">
+        <h3><span class="badge sub">Step 3</span>3. 맥락 탐색 & 프로젝트 관리</h3>
+        <div class="mermaid">
+        flowchart TD
+            NavStart("관리/탐색 모드") --> Intent{"사용자 의도"}
+            
+            Intent -- "다른 분기(맥락) 확인" --> MapView["우측 사이드바 대화 지도"]
+            MapView --> NodeClick["원하는 형제 노드(질문) 클릭"]
+            NodeClick --> Switch["해당 대화 시점으로 이동"]
+            
+            Intent -- "프로젝트 정리" --> LeftView["좌측 사이드바 미분류 목록"]
+            LeftView --> Drag["대화 아이템 드래그"]
+            Drag --> Drop["프로젝트 폴더에 드롭"]
+            Drop --> Assign["소속 프로젝트 변경 완료"]
+        </div>
+    </div>
+
+</body>
+</html>
