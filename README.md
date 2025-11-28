@@ -1,10 +1,10 @@
-# Impact Chat Prototype
+# Impact Chat
 
-React 없이 구현된 채팅 애플리케이션입니다. Streamlit으로 실행할 수 있습니다.
+Streamlit으로 실행할 수 있습니다.
 
 ## 실행 방법
 
-### Streamlit으로 실행 (권장)
+### Streamlit으로 실행
 
 1. 의존성 설치:
 ```bash
