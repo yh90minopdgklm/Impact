@@ -1,0 +1,255 @@
+openapi: 3.0.3
+info:
+  title: Impact Chat API
+  description: |
+    Impact Chat Prototype의 REST API 명세서입니다.
+    Google AI (Gemini)를 활용한 채팅 기능과 대화 제목 자동 생성 기능을 제공합니다.
+  version: 1.0.0
+  contact:
+    name: Impact Chat Team
+
+servers:
+  - url: http://127.0.0.1:8000
+    description: 로컬 개발 서버
+  - url: http://localhost:8000
+    description: 로컬 개발 서버 (대체)
+
+tags:
+  - name: Health
+    description: 서버 상태 확인
+  - name: Chat
+    description: AI 채팅 기능
+  - name: Title
+    description: 대화 제목 생성
+
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      summary: 헬스 체크
+      description: |
+        API 서버의 상태와 Google AI 초기화 상태를 확인합니다.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 서버가 정상적으로 작동 중입니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "ok"
+                model_initialized: true
+                api_key_set: true
+
+  /api/chat:
+    post:
+      tags:
+        - Chat
+      summary: AI 채팅 메시지 전송
+      description: |
+        사용자 메시지를 Google AI (Gemini)에 전송하고 AI 응답을 받습니다.
+        대화 히스토리를 포함하여 컨텍스트를 유지할 수 있습니다.
+      operationId: sendChatMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            example:
+              messages:
+                - role: "user"
+                  content: "리액트가 뭐야?"
+                - role: "ai"
+                  content: "리액트(React)는 페이스북에서 개발한 사용자 인터페이스를 만들기 위한 자바스크립트 라이브러리입니다."
+                - role: "user"
+                  content: "JSX 문법 알려줘"
+      responses:
+        '200':
+          description: AI 응답이 성공적으로 생성되었습니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              example:
+                content: "JSX는 자바스크립트의 확장 문법으로, HTML과 비슷하게 생겼지만 자바스크립트 내에서 UI 요소를 설명하는 데 사용됩니다."
+                role: "ai"
+        '400':
+          description: 잘못된 요청입니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "마지막 메시지는 사용자 메시지여야 합니다."
+        '500':
+          description: 서버 오류가 발생했습니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                apiNotInitialized:
+                  summary: Google AI가 초기화되지 않음
+                  value:
+                    detail: "Google AI가 초기화되지 않았습니다. GOOGLE_API_KEY 환경 변수를 설정하세요."
+                invalidApiKey:
+                  summary: API 키가 유효하지 않음
+                  value:
+                    detail: "Google AI API 키가 유효하지 않습니다. GOOGLE_API_KEY를 확인하세요."
+                quotaExceeded:
+                  summary: 할당량 초과
+                  value:
+                    detail: "API 할당량을 초과했습니다. 나중에 다시 시도하세요."
+                apiError:
+                  summary: 기타 API 오류
+                  value:
+                    detail: "Google AI API 오류: [오류 메시지]"
+
+  /api/generate-title:
+    post:
+      tags:
+        - Title
+      summary: 대화 제목 자동 생성
+      description: |
+        첫 번째 사용자 메시지를 기반으로 대화 제목을 자동으로 생성합니다.
+        Google AI를 사용하여 더 나은 제목을 생성하려고 시도하며, 실패 시 메시지의 앞부분을 제목으로 사용합니다.
+      operationId: generateTitle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TitleRequest'
+            example:
+              first_message: "리액트가 뭐야?"
+      responses:
+        '200':
+          description: 제목이 성공적으로 생성되었습니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TitleResponse'
+              example:
+                title: "리액트에 대한 질문"
+        '500':
+          description: 서버 오류가 발생했습니다.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: "Google AI가 초기화되지 않았습니다. GOOGLE_API_KEY를 설정하세요."
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - model_initialized
+        - api_key_set
+      properties:
+        status:
+          type: string
+          enum: [ok]
+          description: 서버 상태
+          example: "ok"
+        model_initialized:
+          type: boolean
+          description: Google AI 모델이 초기화되었는지 여부
+          example: true
+        api_key_set:
+          type: boolean
+          description: GOOGLE_API_KEY 환경 변수가 설정되었는지 여부
+          example: true
+
+    ChatRequest:
+      type: object
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          description: 대화 메시지 배열 (히스토리 포함 가능)
+          items:
+            $ref: '#/components/schemas/Message'
+          minItems: 1
+          example:
+            - role: "user"
+              content: "리액트가 뭐야?"
+            - role: "ai"
+              content: "리액트(React)는 페이스북에서 개발한 사용자 인터페이스를 만들기 위한 자바스크립트 라이브러리입니다."
+
+    Message:
+      type: object
+      required:
+        - role
+        - content
+      properties:
+        role:
+          type: string
+          enum: [user, ai]
+          description: 메시지 발신자 역할
+          example: "user"
+        content:
+          type: string
+          description: 메시지 내용
+          example: "리액트가 뭐야?"
+
+    ChatResponse:
+      type: object
+      required:
+        - content
+        - role
+      properties:
+        content:
+          type: string
+          description: AI가 생성한 응답 내용
+          example: "리액트(React)는 페이스북에서 개발한 사용자 인터페이스를 만들기 위한 자바스크립트 라이브러리입니다."
+        role:
+          type: string
+          enum: [ai]
+          description: 응답 발신자 역할 (항상 'ai')
+          example: "ai"
+
+    TitleRequest:
+      type: object
+      required:
+        - first_message
+      properties:
+        first_message:
+          type: string
+          description: 첫 번째 사용자 메시지
+          minLength: 1
+          example: "리액트가 뭐야?"
+
+    TitleResponse:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          description: 생성된 대화 제목 (최대 50자)
+          maxLength: 50
+          example: "리액트에 대한 질문"
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: 오류 상세 메시지
+          example: "마지막 메시지는 사용자 메시지여야 합니다."
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API 키 인증 (현재는 사용하지 않음)
