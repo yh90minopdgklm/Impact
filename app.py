@@ -289,6 +289,7 @@ def generate_html():
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Impact Chat Prototype</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
   <style>
     body {{
       margin: 0;
@@ -307,6 +308,115 @@ def generate_html():
       -webkit-line-clamp: 1;
       -webkit-box-orient: vertical;
       overflow: hidden;
+    }}
+    /* Markdown 스타일링 */
+    .markdown-content {{
+      word-wrap: break-word;
+    }}
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {{
+      font-weight: bold;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+    }}
+    .markdown-content h1 {{ font-size: 1.5em; }}
+    .markdown-content h2 {{ font-size: 1.3em; }}
+    .markdown-content h3 {{ font-size: 1.1em; }}
+    .markdown-content p {{
+      margin: 0.5em 0;
+    }}
+    .markdown-content p:first-child {{
+      margin-top: 0;
+    }}
+    .markdown-content p:last-child {{
+      margin-bottom: 0;
+    }}
+    .markdown-content ul,
+    .markdown-content ol {{
+      margin: 0.5em 0;
+      padding-left: 1.5em;
+    }}
+    .markdown-content li {{
+      margin: 0.25em 0;
+    }}
+    .markdown-content code {{
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 0.2em 0.4em;
+      border-radius: 0.25em;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }}
+    .markdown-content pre {{
+      background-color: rgba(0, 0, 0, 0.1);
+      padding: 0.75em;
+      border-radius: 0.5em;
+      overflow-x: auto;
+      margin: 0.5em 0;
+    }}
+    .markdown-content pre code {{
+      background-color: transparent;
+      padding: 0;
+    }}
+    .markdown-content blockquote {{
+      border-left: 3px solid rgba(0, 0, 0, 0.2);
+      padding-left: 1em;
+      margin: 0.5em 0;
+      font-style: italic;
+    }}
+    .markdown-content a {{
+      text-decoration: underline;
+      opacity: 0.9;
+    }}
+    .markdown-content a:hover {{
+      opacity: 1;
+    }}
+    .markdown-content table {{
+      border-collapse: collapse;
+      margin: 0.5em 0;
+      width: 100%;
+    }}
+    .markdown-content th,
+    .markdown-content td {{
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      padding: 0.5em;
+    }}
+    .markdown-content th {{
+      background-color: rgba(0, 0, 0, 0.05);
+      font-weight: bold;
+    }}
+    /* 사용자 메시지의 마크다운 스타일 (흰색 텍스트용) */
+    .markdown-content.user-msg h1,
+    .markdown-content.user-msg h2,
+    .markdown-content.user-msg h3,
+    .markdown-content.user-msg h4,
+    .markdown-content.user-msg h5,
+    .markdown-content.user-msg h6 {{
+      color: white;
+    }}
+    .markdown-content.user-msg code {{
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }}
+    .markdown-content.user-msg pre {{
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }}
+    .markdown-content.user-msg blockquote {{
+      border-left-color: rgba(255, 255, 255, 0.4);
+    }}
+    .markdown-content.user-msg a {{
+      color: rgba(255, 255, 255, 0.9);
+    }}
+    .markdown-content.user-msg th,
+    .markdown-content.user-msg td {{
+      border-color: rgba(255, 255, 255, 0.3);
+    }}
+    .markdown-content.user-msg th {{
+      background-color: rgba(255, 255, 255, 0.1);
     }}
   </style>
 </head>
@@ -622,7 +732,17 @@ def generate_html():
               : 'bg-[#F7F7F8] text-[#1F1F1F] rounded-tl-sm border border-gray-100'
             }}
           `);
-          bubble.textContent = msg.content;
+          
+          // 마크다운 렌더링
+          const markdownContent = createElement('div', `markdown-content ${{msg.role === 'user' ? 'user-msg' : ''}}`);
+          if (typeof marked !== 'undefined') {{
+            // marked.js가 로드된 경우 마크다운 파싱
+            markdownContent.innerHTML = marked.parse(msg.content);
+          }} else {{
+            // marked.js가 없는 경우 일반 텍스트로 표시
+            markdownContent.textContent = msg.content;
+          }}
+          bubble.appendChild(markdownContent);
           
           if (msg.role === 'ai') {{
             const branchButton = createElement('div', 'absolute -right-24 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200');

@@ -279,7 +279,17 @@ function renderMessages() {
           : 'bg-[#F7F7F8] text-[#1F1F1F] rounded-tl-sm border border-gray-100'
         }
       `);
-      bubble.textContent = msg.content;
+      
+      // 마크다운 렌더링
+      const markdownContent = createElement('div', `markdown-content ${msg.role === 'user' ? 'user-msg' : ''}`);
+      if (typeof marked !== 'undefined') {
+        // marked.js가 로드된 경우 마크다운 파싱
+        markdownContent.innerHTML = marked.parse(msg.content);
+      } else {
+        // marked.js가 없는 경우 일반 텍스트로 표시
+        markdownContent.textContent = msg.content;
+      }
+      bubble.appendChild(markdownContent);
       
       if (msg.role === 'ai') {
         const branchButton = createElement('div', 'absolute -right-24 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200');
